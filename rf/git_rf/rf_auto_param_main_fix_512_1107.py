@@ -1,0 +1,126 @@
+#! D:\Users\zhennanpang\Anaconda3\envs python
+# -*- coding: utf-8 -*-
+# @Time : 2020/8/20 16:47
+# @Author : ZhennanpPang
+# @File : aotu_param_main.py
+# @Software: PyCharm
+
+# from utils import utils
+# from auto_param_gbdt_lr import compute_params
+import scipy.io as scio
+import scipy.misc as misc
+import numpy as np
+import h5py
+import os
+from sklearn.ensemble import RandomForestClassifier
+import math
+import time
+import cv2
+from utils import utils
+
+
+def generate_x_train(hks, deep_feature):
+    x_train = np.hstack((hks, deep_feature))
+    return x_train
+
+
+def train_test_get():
+    # load train
+    data_train_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn512/JPEGImages_512_train'
+    label_data_train_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn3/all_label_train_new_version'
+    train_text = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn512/ImageSets/Segmentation/train_40.txt'
+    x_train_, y_train_ = utils.load_files_from_text(train_text, data_train_path, label_data_train_path, is_norm = False)
+    y_train_= np.squeeze(y_train_)
+
+    print('Success Load Data!', x_train_.shape)
+    print('Success Load Data!', x_train_[0].shape)
+
+    # load test
+    data_test_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn512/JPEGImages_512_test'
+    lable_data_test_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn3/all_label_train_new_version'
+    x_test_, y_test_ = utils.load_files(data_test_path, lable_data_test_path, is_norm = False)
+    y_test_ = np.squeeze(y_test_)
+
+    print('Success Load Data!', x_train_.shape)
+    print('Success Load Data!', x_train_[0].shape)
+
+    return x_train_, y_train_, x_test_, y_test_
+
+
+def get_train_data():
+    # load train
+    data_train_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn512/JPEGImages_512_train'
+    label_data_train_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn3/all_label_train_new_version'
+    train_text = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn512/ImageSets/Segmentation/train_40.txt'
+    x_train_, y_train_ = utils.load_files_from_text(train_text, data_train_path, label_data_train_path, is_norm=False)
+    y_train_ = np.squeeze(y_train_)
+
+    print('Success Load Data!', x_train_.shape)
+    print('Success Load Data!', x_train_[0].shape)
+
+    return x_train_, y_train_
+
+
+def get_test_data():
+    # load test
+    data_test_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn512/JPEGImages_512_test'
+    lable_data_test_path = '/home/pzn/pzncode/yjl/to_yuan/datasets/cnn3/all_label_train_new_version'
+    x_test_, y_test_ = utils.load_files(data_test_path, lable_data_test_path, is_norm=False)
+    y_test_ = np.squeeze(y_test_)
+
+    print('Success Load Data!', x_test_.shape)
+    print('Success Load Data!', y_test_[0].shape)
+
+    return x_test_, y_test_
+
+
+import pickle
+
+def train_process():
+    # x_train_, y_train_, x_test_, y_test_ = train_test_get()
+    x_train_, y_train_ = get_train_data()
+    # model = compute_params(x_train_, y_train_)
+    # print('best model:', model)
+    rf = RandomForestClassifier(n_estimators=100)
+    # rf = RandomForestClassifier(n_estimators=200)
+    rf.fit(x_train_,y_train_)
+    print(rf.predict(x_train_))
+
+    current_model_path = './model/'
+    if not os.path.isdir(current_model_path):
+        os.mkdir(current_model_path)
+    current_model_name = 'rf_clf_512_40all_100_cnn512_rgb_xy.pickle'
+
+    with open(current_model_path+current_model_name, 'wb') as f:
+        pickle.dump(rf, f)
+        print('model saved successfully!')
+        f.close()
+
+from sklearn.metrics import accuracy_score
+
+
+def test_process():
+    # x_train_, y_train_, x_test_, y_test_ = train_test_get()
+    x_test_, y_test_ = get_test_data()
+    current_model_path = './model/'
+    current_model_name = 'rf_clf_512_40all_100_cnn512_rgb_xy.pickle'
+    with open(current_model_path + current_model_name, 'rb') as f:
+        rf = pickle.load(f)
+        y_pred_ = rf.predict(x_test_)
+        print(accuracy_score(y_test_, y_pred_))
+        f.close()
+
+
+
+if __name__ == '__main__':
+
+    #load_x_file("/home/pzn/pzncode/yjl/to_yuan/datasets/cnn3_small/cnn3_train/2018_000021.mat")
+    # train_process()
+    # print('train success! model saved!')
+    test_process()
+
+    # model = compute_params(x_train_, one_y)
+    localtime = time.asctime(time.localtime(time.time()))
+    print("Finished Time:", localtime)
+
+
